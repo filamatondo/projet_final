@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -56,6 +58,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Column(type="string", length=1)
      */
     private $sexe;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Statut::class, mappedBy="user", orphanRemoval=true)
+     */
+    private $statuts;
+
+    /**
+     * @ORM\OneToOne(targetEntity=ListeAmi::class, mappedBy="user", cascade={"persist", "remove"})
+     */
+    private $listeAmi;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Ami::class, mappedBy="user")
+     */
+    private $amis;
+
+    public function __construct()
+    {
+        $this->statuts = new ArrayCollection();
+        $this->amis = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -190,6 +213,83 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setSexe(string $sexe): self
     {
         $this->sexe = $sexe;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Statut[]
+     */
+    public function getStatuts(): Collection
+    {
+        return $this->statuts;
+    }
+
+    public function addStatut(Statut $statut): self
+    {
+        if (!$this->statuts->contains($statut)) {
+            $this->statuts[] = $statut;
+            $statut->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStatut(Statut $statut): self
+    {
+        if ($this->statuts->removeElement($statut)) {
+            // set the owning side to null (unless already changed)
+            if ($statut->getUser() === $this) {
+                $statut->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getListeAmi(): ?ListeAmi
+    {
+        return $this->listeAmi;
+    }
+
+    public function setListeAmi(ListeAmi $listeAmi): self
+    {
+        // set the owning side of the relation if necessary
+        if ($listeAmi->getUser() !== $this) {
+            $listeAmi->setUser($this);
+        }
+
+        $this->listeAmi = $listeAmi;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Ami[]
+     */
+    public function getAmis(): Collection
+    {
+        return $this->amis;
+    }
+
+    public function addAmi(Ami $ami): self
+    {
+        if (!$this->amis->contains($ami)) {
+            $this->amis[] = $ami;
+            $ami->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAmi(Ami $ami): self
+    {
+        if ($this->amis->removeElement($ami)) {
+            // set the owning side to null (unless already changed)
+            if ($ami->getUser() === $this) {
+                $ami->setUser(null);
+            }
+        }
 
         return $this;
     }
